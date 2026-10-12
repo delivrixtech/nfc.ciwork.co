@@ -48,7 +48,7 @@ The experience includes:
 | --- | --- | --- |
 | Application | Astro 7.3.8 | Static pages, layouts, components, routing, and build output |
 | Language | TypeScript 6 in strict mode | Typed content models and client behavior |
-| Motion | GSAP 3.15 | Choreographed transitions, pointer reactions, and UI micro-interactions |
+| Motion | GSAP 3.15 + ScrollTrigger | Responsive scroll choreography, pointer reactions, and UI micro-interactions |
 | Carousels | Splide 4.1 + AutoScroll | Accessible continuous media rails |
 | Icons | Phosphor Icons | Consistent interface and service iconography |
 | Typography | Inter Variable | Locally bundled variable font under the SIL Open Font License 1.1 |
@@ -68,7 +68,7 @@ The following packages are pinned for future NFC-owned experiences but are **not
 flowchart TD
   Data["Content · src/data"] --> UI["Astro pages + components"]
   Styles["Design tokens · responsive · dark mode"] --> UI
-  Motion["GSAP · Splide · pointer interactions"] --> UI
+  Motion["GSAP · ScrollTrigger · Splide · touch and pointer interactions"] --> UI
   UI --> Layout["BaseLayout · SEO · Schema.org · theme"]
   Layout --> Build["Static build · dist/"]
   Build --> SEO["SEO and internal-link validation"]
@@ -121,6 +121,7 @@ Legacy requests to `/form/` and `/map-test/` redirect to their current local equ
 │   └── media/                 # Optimized NFC imagery and service artwork
 ├── scripts/
 │   ├── a11y-check.mjs         # Playwright, axe, and overflow validation
+│   ├── motion-check.mjs       # Responsive ScrollTrigger and reduced-motion validation
 │   ├── seo-check.mjs          # Metadata, schema, sitemap, link, and asset checks
 │   └── visual-audit.mjs       # Local visual-review support
 ├── source-media/              # Ignored archival masters; never published
@@ -173,14 +174,15 @@ npm run preview
 | `npm run build` | Generates the static production artifact in `dist/` |
 | `npm run preview` | Serves the built artifact locally |
 | `npm run qa:seo` | Validates all indexable routes, metadata, schema, links, fragments, sitemap, and public assets |
+| `npm run qa:motion` | Verifies real scroll motion at mobile, tablet, and desktop widths plus the reduced-motion fallback |
 | `npm run qa:a11y` | Checks desktop and responsive scenarios with Playwright and axe, including horizontal overflow |
-| `npm run qa` | Runs checks, build, SEO/link validation, and browser accessibility QA in sequence |
+| `npm run qa` | Runs checks, build, SEO/link, responsive motion, overflow, and browser accessibility QA in sequence |
 
 ## Experience standards
 
 ### Motion
 
-Motion is part of the interface hierarchy, not decoration. GSAP powers card reactions, button feedback, content reveals, pricing interactions, and the geometric closing scene; Splide handles continuous rails. Effects are scoped to suitable pointers and viewports, and expensive work is avoided when it would not improve the experience.
+Motion is part of the interface hierarchy, not decoration. GSAP and ScrollTrigger power responsive section reveals, bounded image parallax, pricing entrances, button feedback, and the geometric closing scene; Splide handles continuous rails. `gsap.matchMedia()` tunes distance, timing, and sequencing for phone, tablet, and desktop layouts while mobile retains native scrolling. Effects are scoped to suitable pointers and viewports, and expensive work is avoided when it would not improve the experience.
 
 The website independently implements NFC-owned DOM, CSS, and GSAP interaction artwork. No reference-site JavaScript, SVGs, iframes, or proprietary animation files are shipped.
 
@@ -211,6 +213,8 @@ The automated gate confirms:
 - Titles, descriptions, canonical URLs, robots directives, one `h1`, and JSON-LD are present.
 - Internal links, fragment targets, redirects, and local assets resolve.
 - Representative desktop, tablet, and mobile views have no detected horizontal overflow.
+- Scroll-linked motion is observable across the core landing sections at phone, tablet, and desktop widths.
+- Reduced-motion visitors receive fully visible, still content with no carousel autoplay or spatial reveals.
 - Automated axe scans report no accessibility violations in the tested scenarios.
 
 Automated checks complement—rather than replace—manual review of content, motion, visual hierarchy, keyboard behavior, and real-device rendering.

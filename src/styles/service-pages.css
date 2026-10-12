@@ -696,3 +696,62 @@
   .legal-page__contact { padding: 28px 20px; }
   .legal-page__contact a { overflow-wrap: anywhere; font-size: 17px; }
 }
+
+/* Coarse pointers receive deliberate press feedback without inheriting hover motion. */
+@media (hover: none) and (pointer: coarse) {
+  .service-breadcrumb a,
+  .service-text-link,
+  .service-faq__item button,
+  .service-related-card,
+  .service-catalog-card,
+  .state-directory__grid a,
+  .state-guide__copy nav a,
+  .state-guide__services > div > a,
+  .legal-page__layout > aside a,
+  .legal-page__contact a {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .service-text-link:active,
+  .service-faq__item button:active { opacity: .76; }
+
+  .service-related-card:active,
+  .service-catalog-card:active,
+  .state-directory__grid a:active,
+  .state-guide__services > div > a:active { opacity: .95; }
+
+  .service-breadcrumb a:active,
+  .state-guide__copy nav a:active,
+  .legal-page__layout > aside a:active,
+  .legal-page__contact a:active { opacity: .64; }
+}
+
+@media (hover: none) and (pointer: coarse) and (prefers-reduced-motion: no-preference) {
+  .service-text-link,
+  .service-faq__item button {
+    scale: 1;
+    transition: scale .14s cubic-bezier(.2, .75, .25, 1), opacity .14s ease;
+  }
+
+  .service-text-link:active { scale: .975; }
+  .service-faq__item button:active { scale: .992; }
+
+  .service-related-card,
+  .service-catalog-card,
+  .state-directory__grid a,
+  .state-guide__services > div > a {
+    scale: 1;
+    transition:
+      scale .16s cubic-bezier(.2, .75, .25, 1),
+      opacity .16s ease,
+      color .35s ease,
+      background-color .35s ease,
+      transform .4s cubic-bezier(.2, .75, .25, 1);
+  }
+
+  .service-related-card:active,
+  .service-catalog-card:active,
+  .state-directory__grid a:active,
+  .state-guide__services > div > a:active { scale: .99; }
+}

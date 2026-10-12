@@ -10,8 +10,9 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
-    "qa": "npm run check && npm run build && npm run qa:seo && npm run qa:a11y",
+    "qa": "npm run check && npm run build && npm run qa:seo && npm run qa:motion && npm run qa:a11y",
     "qa:seo": "node scripts/seo-check.mjs",
+    "qa:motion": "node scripts/motion-check.mjs",
     "qa:a11y": "node scripts/a11y-check.mjs",
     "astro": "astro"
   },

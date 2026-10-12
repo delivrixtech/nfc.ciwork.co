@@ -1,8 +1,11 @@
 import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Splide from '@splidejs/splide';
 import { AutoScroll } from '@splidejs/splide-extension-auto-scroll';
 
 type Cleanup = () => void;
+
+gsap.registerPlugin(ScrollTrigger);
 
 const cleanups: Cleanup[] = [];
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -302,46 +305,70 @@ function initServicesMenu() {
 
 function initCarousels() {
   const roots = [...document.querySelectorAll<HTMLElement>('.js-ticker, .js-media-rail')];
-  const instances = roots.map((root) => {
-    const reduce = reducedMotion();
-    const instance = new Splide(root, {
-      type: reduce ? 'slide' : 'loop',
-      autoWidth: true,
-      gap: '1rem',
-      arrows: false,
-      pagination: false,
-      drag: 'free',
-      focus: 'center',
-      updateOnMove: true,
-      autoScroll: {
-        speed: 1,
-        pauseOnHover: true,
-        pauseOnFocus: true,
-      },
+  const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let instances: Splide[] = [];
+  let refreshFrame = 0;
+
+  const destroyInstances = () => {
+    instances.forEach((instance) => instance.destroy(true));
+    instances = [];
+  };
+  const mountInstances = () => {
+    destroyInstances();
+    const reduce = motionPreference.matches;
+    instances = roots.map((root) => {
+      const instance = new Splide(root, {
+        type: reduce ? 'slide' : 'loop',
+        autoWidth: true,
+        gap: '1rem',
+        arrows: false,
+        pagination: false,
+        drag: 'free',
+        focus: 'center',
+        updateOnMove: true,
+        autoScroll: {
+          speed: 1,
+          pauseOnHover: true,
+          pauseOnFocus: true,
+        },
+      });
+      instance.mount(reduce ? {} : { AutoScroll });
+      return instance;
     });
-    instance.mount(reduce ? {} : { AutoScroll });
-    return instance;
+    cancelAnimationFrame(refreshFrame);
+    refreshFrame = requestAnimationFrame(() => ScrollTrigger.refresh());
+  };
+  const onMotionPreferenceChange = () => mountInstances();
+
+  motionPreference.addEventListener('change', onMotionPreferenceChange);
+  mountInstances();
+  addCleanup(() => {
+    motionPreference.removeEventListener('change', onMotionPreferenceChange);
+    cancelAnimationFrame(refreshFrame);
+    destroyInstances();
   });
-  addCleanup(() => instances.forEach((instance) => instance.destroy(true)));
 }
 
 function initServiceCases() {
   const container = document.querySelector<HTMLElement>('[data-service-cases]');
   if (!container) return;
   const cases = [...container.querySelectorAll<HTMLElement>('[data-service-case]')];
-  const desktop = window.matchMedia('(min-width: 1280px) and (pointer: fine)');
+  const desktop = window.matchMedia('(min-width: 1280px) and (pointer: fine) and (prefers-reduced-motion: no-preference)');
   const artOffset = (art: HTMLElement) => Number(art.dataset.artOffset ?? 0);
 
   const prepare = () => {
     cases.forEach((item) => {
       const detail = item.querySelector<HTMLElement>('.price-shape__detail');
       const art = [...item.querySelectorAll<HTMLElement>('[data-shape-art]')];
-      if (desktop.matches && !reducedMotion()) {
+      const animatedTargets = [item, ...(detail ? [detail] : []), ...art];
+      gsap.killTweensOf(animatedTargets);
+      if (desktop.matches) {
         gsap.set(detail, { autoAlpha: 0 });
         art.forEach((accent) => gsap.set(accent, { y: artOffset(accent) }));
       } else {
-        gsap.set([detail, ...art], { clearProps: 'all' });
-        gsap.set(cases, { clearProps: 'transform' });
+        item.classList.remove('is-active');
+        gsap.set([...(detail ? [detail] : []), ...art], { clearProps: 'all' });
+        gsap.set(item, { clearProps: 'transform' });
       }
     });
   };
@@ -349,7 +376,7 @@ function initServiceCases() {
   const reset = () => {
     cases.forEach((item) => {
       item.classList.remove('is-active');
-      if (!desktop.matches || reducedMotion()) return;
+      if (!desktop.matches) return;
       gsap.to(item, { x: 0, duration: .6, ease: 'expo.out', overwrite: true });
       gsap.to(item.querySelector('.price-shape__detail'), { autoAlpha: 0, duration: .3, ease: 'power2.inOut', overwrite: true });
       item.querySelectorAll<HTMLElement>('[data-shape-art]').forEach((accent) => {
@@ -360,7 +387,7 @@ function initServiceCases() {
 
   const bindings = cases.map((item, index) => {
     const enter = () => {
-      if (!desktop.matches || reducedMotion()) return;
+      if (!desktop.matches) return;
       cases.forEach((card, cardIndex) => {
         card.classList.toggle('is-active', card === item);
         gsap.to(card, {
@@ -783,6 +810,533 @@ function initFilingCrew() {
   }));
 }
 
+function initScrollMotion() {
+  type MotionConditions = {
+    phone?: boolean;
+    tablet?: boolean;
+    desktop?: boolean;
+    coarse?: boolean;
+    motion?: boolean;
+  };
+  type RevealKind = 'rise' | 'left' | 'right' | 'fade' | 'clip' | 'scale-clip';
+  type RevealOptions = {
+    start?: string;
+    duration?: number;
+    stagger?: number;
+    delay?: number;
+    distance?: number;
+    clipInset?: string;
+  };
+
+  const media = gsap.matchMedia();
+  const revealed = new WeakSet<HTMLElement>();
+  const morphedCrews = new WeakSet<HTMLElement>();
+  let refreshFrame = 0;
+
+  media.add({
+    phone: '(max-width: 767px)',
+    tablet: '(min-width: 768px) and (max-width: 991px)',
+    desktop: '(min-width: 992px)',
+    coarse: '(pointer: coarse)',
+    motion: '(prefers-reduced-motion: no-preference)',
+  }, (context) => {
+    const conditions = (context.conditions ?? {}) as MotionConditions;
+    const phone = Boolean(conditions.phone);
+    const tablet = Boolean(conditions.tablet);
+    const compact = phone || tablet;
+    const coarse = Boolean(conditions.coarse);
+
+    // The unanimated DOM is the fallback. MatchMedia reverts any active motion
+    // when the operating-system preference changes to reduced motion.
+    if (!conditions.motion) return;
+
+    const distance = phone ? 28 : tablet ? 36 : 48;
+    const duration = phone ? .68 : tablet ? .76 : .84;
+    const stagger = phone ? .055 : tablet ? .065 : .075;
+    const viewportStart = phone ? 'top 92%' : tablet ? 'top 89%' : 'top 86%';
+    const clipInset = phone
+      ? 'inset(8% 0 0 0 round 24px)'
+      : tablet
+        ? 'inset(8% 0 0 0 round 28px)'
+        : 'inset(10% 0 0 0 round 32px)';
+
+    const all = <T extends HTMLElement = HTMLElement>(selector: string, scope: ParentNode = document) => (
+      [...scope.querySelectorAll<T>(selector)]
+    );
+
+    const reveal = (
+      targets: HTMLElement[],
+      trigger: Element | null,
+      kind: RevealKind = 'rise',
+      options: RevealOptions = {},
+    ) => {
+      if (!trigger) return;
+      const pending = targets.filter((target) => !revealed.has(target));
+      if (!pending.length) return;
+
+      const markRevealed = () => pending.forEach((target) => revealed.add(target));
+      const shared = {
+        duration: options.duration ?? duration,
+        stagger: options.stagger ?? stagger,
+        delay: options.delay ?? 0,
+        ease: 'expo.out',
+        immediateRender: false,
+        onStart: markRevealed,
+        scrollTrigger: {
+          trigger,
+          start: options.start ?? viewportStart,
+          once: true,
+          toggleActions: 'play none none none',
+          invalidateOnRefresh: true,
+        },
+      };
+      const travel = options.distance ?? distance;
+
+      if (kind === 'clip') {
+        gsap.from(pending, {
+          ...shared,
+          autoAlpha: 0,
+          clipPath: options.clipInset ?? clipInset,
+          clearProps: 'clipPath,opacity,visibility',
+        });
+      } else if (kind === 'scale-clip') {
+        gsap.from(pending, {
+          ...shared,
+          autoAlpha: 0,
+          scale: compact ? .985 : .975,
+          clipPath: options.clipInset ?? clipInset,
+          transformOrigin: '50% 50%',
+          clearProps: 'transform,transformOrigin,clipPath,opacity,visibility',
+        });
+      } else if (kind === 'fade') {
+        gsap.from(pending, {
+          ...shared,
+          autoAlpha: 0,
+          clearProps: 'opacity,visibility',
+        });
+      } else if (kind === 'left') {
+        gsap.from(pending, {
+          ...shared,
+          x: -travel,
+          autoAlpha: 0,
+          clearProps: 'transform,opacity,visibility',
+        });
+      } else if (kind === 'right') {
+        gsap.from(pending, {
+          ...shared,
+          x: travel,
+          autoAlpha: 0,
+          clearProps: 'transform,opacity,visibility',
+        });
+      } else {
+        gsap.from(pending, {
+          ...shared,
+          y: travel,
+          autoAlpha: 0,
+          clearProps: 'transform,opacity,visibility',
+        });
+      }
+    };
+
+    const revealCollection = (
+      rootSelector: string,
+      itemSelector: string,
+      kind: RevealKind,
+      options: RevealOptions = {},
+      individualOnCompact = true,
+    ) => {
+      all(rootSelector).forEach((root) => {
+        const items = all(itemSelector, root);
+        if (compact && individualOnCompact) {
+          items.forEach((item) => reveal([item], item, kind, { ...options, stagger: 0 }));
+        } else {
+          reveal(items, root, kind, options);
+        }
+      });
+    };
+
+    const animatePanelIntro = (selector: string) => {
+      all(selector).forEach((panel) => {
+        const children = all<HTMLElement>(':scope > *', panel).filter((child) => !revealed.has(child));
+        if (!children.length) return;
+        children.forEach((child) => revealed.add(child));
+        gsap.from(children, {
+          y: compact ? 24 : 36,
+          autoAlpha: 0,
+          duration: compact ? .7 : .82,
+          stagger: compact ? .075 : .09,
+          ease: 'expo.out',
+          clearProps: 'transform,opacity,visibility',
+        });
+      });
+    };
+
+    const animateSplitIntro = (copySelector: string, mediaSelector: string) => {
+      const copy = document.querySelector<HTMLElement>(copySelector);
+      const visual = document.querySelector<HTMLElement>(mediaSelector);
+      if (!copy && !visual) return;
+
+      if (compact) {
+        if (copy && !revealed.has(copy)) {
+          revealed.add(copy);
+          gsap.from(copy, {
+            y: phone ? 22 : 30,
+            autoAlpha: 0,
+            duration: phone ? .72 : .8,
+            ease: 'expo.out',
+            clearProps: 'transform,opacity,visibility',
+          });
+        }
+        if (visual) {
+          reveal([visual], visual, 'scale-clip', {
+            start: phone ? 'top 94%' : 'top 91%',
+            duration: phone ? .76 : .84,
+          });
+        }
+        return;
+      }
+
+      const pending = [copy, visual]
+        .filter((element): element is HTMLElement => element !== null && !revealed.has(element));
+      if (!pending.length) return;
+      const timeline = gsap.timeline({
+        defaults: { duration: .88, ease: 'expo.out' },
+        onStart: () => pending.forEach((element) => revealed.add(element)),
+      });
+      if (copy && pending.includes(copy)) {
+        timeline.from(copy, {
+          x: -42,
+          autoAlpha: 0,
+          clearProps: 'transform,opacity,visibility',
+        });
+      }
+      if (visual && pending.includes(visual)) {
+        timeline.from(visual, {
+          x: 42,
+          autoAlpha: 0,
+          clipPath: 'inset(0 10% 0 0 round 48px)',
+          clearProps: 'transform,clipPath,opacity,visibility',
+        }, copy && pending.includes(copy) ? '-=.64' : 0);
+      }
+    };
+
+    // Home hero: the one authored load sequence. Everything remains visible
+    // until this client script starts, so a failed script never hides content.
+    const heroTitle = document.querySelector<HTMLElement>('.hero__title');
+    const heroStage = document.querySelector<HTMLElement>('.hero__stage');
+    const heroTargets = [heroTitle, heroStage]
+      .filter((element): element is HTMLElement => element !== null && !revealed.has(element));
+    if (heroTargets.length) {
+      const heroTimeline = gsap.timeline({
+        defaults: { ease: 'expo.out' },
+        onStart: () => heroTargets.forEach((element) => revealed.add(element)),
+      });
+      let hasHeroLead = false;
+      if (heroTitle && heroTargets.includes(heroTitle)) {
+        heroTimeline.from(heroTitle, {
+          y: phone ? 24 : tablet ? 30 : 42,
+          autoAlpha: 0,
+          duration: phone ? .72 : .84,
+          clearProps: 'transform,opacity,visibility',
+        });
+        hasHeroLead = true;
+      }
+      if (heroStage && heroTargets.includes(heroStage)) {
+        heroTimeline.from(heroStage, {
+          autoAlpha: 0,
+          scale: compact ? .985 : .972,
+          clipPath: phone
+            ? 'inset(7% 3% 7% 3% round 24px)'
+            : 'inset(8% 3% 8% 3% round 48px)',
+          transformOrigin: '50% 50%',
+          duration: phone ? .78 : .96,
+          clearProps: 'transform,transformOrigin,clipPath,opacity,visibility',
+        }, hasHeroLead ? '-=.52' : 0);
+      }
+    }
+
+    // Above-the-fold compositions used by service, intake, state, and legal pages.
+    animateSplitIntro('.service-hero__copy', '.service-hero__media');
+    animateSplitIntro('.intake-hero__copy', '.intake-form');
+    animateSplitIntro('.state-guide__copy', '.state-guide__hero > figure');
+    animatePanelIntro('.inner-hero');
+    animatePanelIntro('.legal-page__hero');
+
+    // Headings establish the reading rhythm; list content gets its own cadence below.
+    const headingSelector = [
+      '.process__intro h2',
+      '.section-heading h2',
+      '.state-story__heading h2',
+      '.service-rail__header h2',
+      '.final-cta h2',
+      '.service-overview h2',
+      '.service-section-heading h2',
+      '.service-related__heading h2',
+      '.pricing-notes h2',
+      '.state-directory h2',
+      '.intake-next h2',
+      '.state-guide__services h2',
+      '.legal-page__content h2',
+    ].join(',');
+    all(headingSelector).forEach((heading) => reveal([heading], heading, 'rise', {
+      duration: compact ? .72 : .88,
+      stagger: 0,
+      distance: compact ? 26 : 44,
+    }));
+
+    // Process film and steps. The image owns the only scrubbed transform in this block;
+    // step children animate instead of their article wrappers so the jump interaction can
+    // continue animating those wrappers without competing for transforms.
+    all('.process-film').forEach((film) => reveal([film], film, 'scale-clip', {
+      duration: compact ? .78 : .94,
+      start: compact ? 'top 91%' : 'top 87%',
+    }));
+    all<HTMLImageElement>('.process-film__image').forEach((image) => {
+      const film = image.closest<HTMLElement>('.process-film');
+      if (!film) return;
+      gsap.fromTo(image, {
+        yPercent: compact ? -2.4 : -4,
+        scale: compact ? 1.055 : 1.075,
+      }, {
+        yPercent: compact ? 2.4 : 4,
+        scale: compact ? 1.018 : 1.024,
+        ease: 'none',
+        immediateRender: false,
+        scrollTrigger: {
+          trigger: film,
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: compact ? .55 : .8,
+          invalidateOnRefresh: true,
+        },
+      });
+    });
+    all('.process__steps').forEach((stepsRoot) => {
+      const steps = all('.process-step', stepsRoot);
+      if (compact) {
+        steps.forEach((step) => reveal(all(':scope > *', step), step, 'rise', {
+          duration: .64,
+          distance: phone ? 22 : 28,
+          stagger: .055,
+        }));
+      } else {
+        reveal(all('.process-step > *', stepsRoot), stepsRoot, 'rise', {
+          duration: .72,
+          distance: 34,
+          stagger: .045,
+        });
+      }
+    });
+
+    // Formation platform cards use a mask reveal so their desktop hover transform remains free.
+    revealCollection('.platform-grid', '.platform-card', 'clip', {
+      duration: compact ? .72 : .84,
+      stagger: compact ? 0 : .07,
+    });
+
+    // Pricing shapes enter independently on narrow screens. Artwork only fades, preserving
+    // the y transforms owned by initServiceCases and its desktop pointer interaction.
+    all('.pricing').forEach((section) => {
+      const shapes = all('.price-shape', section);
+      if (compact) {
+        shapes.forEach((shape) => {
+          const surface = shape.querySelector<HTMLElement>('.price-shape__surface');
+          if (surface) reveal([surface], shape, 'rise', {
+            duration: .72,
+            distance: phone ? 28 : 34,
+            stagger: 0,
+          });
+          reveal(all('[data-shape-art]', shape), shape, 'fade', {
+            duration: .42,
+            stagger: .045,
+            delay: .16,
+          });
+        });
+      } else {
+        reveal(all('.price-shape__surface', section), section, 'rise', {
+          duration: .82,
+          distance: 44,
+          stagger: .075,
+        });
+        reveal(all('[data-shape-art]', section), section, 'fade', {
+          duration: .48,
+          stagger: .045,
+          delay: .2,
+        });
+      }
+    });
+
+    // State selection is spatial on wide screens and sequential on stacked layouts.
+    all('.state-story__body').forEach((body) => {
+      const panel = body.querySelector<HTMLElement>('.state-story__panel');
+      const more = body.querySelector<HTMLElement>('.state-story__more');
+      const visual = body.querySelector<HTMLElement>('.state-story__media');
+      if (compact) {
+        if (visual) reveal([visual], visual, 'scale-clip', { duration: .8 });
+        if (panel) reveal([panel], panel, 'rise', { duration: .72, distance: 28 });
+        if (more) reveal([more], more, 'rise', { duration: .58, distance: 18 });
+      } else {
+        if (panel) reveal([panel], body, 'left', { duration: .86, distance: 44 });
+        if (more) reveal([more], body, 'left', { duration: .68, distance: 28, delay: .08 });
+        if (visual) reveal([visual], body, 'right', { duration: .9, distance: 44 });
+      }
+    });
+    all<HTMLImageElement>('.state-story__media > img').forEach((image) => {
+      const frame = image.closest<HTMLElement>('.state-story__media');
+      if (!frame) return;
+      gsap.fromTo(image, {
+        yPercent: compact ? -2 : -3.5,
+        scale: compact ? 1.045 : 1.065,
+      }, {
+        yPercent: compact ? 2 : 3.5,
+        scale: compact ? 1.015 : 1.022,
+        ease: 'none',
+        immediateRender: false,
+        scrollTrigger: {
+          trigger: frame,
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: compact ? .6 : .85,
+          invalidateOnRefresh: true,
+        },
+      });
+    });
+
+    // Splide owns transforms on its list; reveal the viewport rather than its moving track/cards.
+    all('.service-rail .splide__track').forEach((track) => reveal([track], track, 'clip', {
+      duration: compact ? .76 : .9,
+      clipInset: compact
+        ? 'inset(0 9% 0 0 round 24px)'
+        : 'inset(0 12% 0 0 round 32px)',
+    }));
+
+    // Final CTA copy and crew. On coarse pointers, one scroll-triggered pose change replaces
+    // the unavailable hover morph without introducing a perpetual animation loop.
+    all('.final-cta').forEach((section) => {
+      const actions = section.querySelector<HTMLElement>('.final-cta__actions');
+      const crew = section.querySelector<HTMLElement>('[data-filing-crew]');
+      if (actions) reveal([actions], actions, 'rise', { duration: .62, distance: 22 });
+      if (!crew) return;
+
+      reveal([crew], crew, 'scale-clip', {
+        duration: compact ? .82 : .94,
+        clipInset: compact
+          ? 'inset(5% 2% 0 2% round 24px)'
+          : 'inset(7% 3% 0 3% round 40px)',
+      });
+      reveal(all('[data-filing-figure]', crew), crew, 'fade', {
+        duration: .62,
+        stagger: compact ? .07 : .055,
+        delay: .08,
+      });
+
+      if ((compact || coarse) && !morphedCrews.has(crew)) {
+        const poseTimeline = gsap.timeline({ paused: true });
+        const figures = all('[data-filing-figure]', crew);
+        figures.forEach((figure, index) => {
+          poseTimeline.call(() => {
+            if (getComputedStyle(figure).display === 'none') return;
+            const currentPose = Number.parseInt(figure.dataset.pose ?? '0', 10);
+            figure.dataset.pose = String(((Number.isFinite(currentPose) ? currentPose : 0) + 1) % 4);
+          }, [], index * (phone ? .085 : .07));
+        });
+        ScrollTrigger.create({
+          trigger: crew,
+          start: compact ? 'top 84%' : 'top 78%',
+          once: true,
+          onEnter: () => {
+            if (morphedCrews.has(crew)) return;
+            morphedCrews.add(crew);
+            poseTimeline.play(0);
+          },
+        });
+      }
+    });
+
+    // Footer items reveal as they become useful on stacked layouts, not all at the first edge.
+    all('.site-footer').forEach((footer) => {
+      const brand = footer.querySelector<HTMLElement>('.site-footer__brand');
+      const columns = all('.site-footer__column', footer);
+      const legal = footer.querySelector<HTMLElement>('.site-footer__legal');
+      if (compact) {
+        if (brand) reveal([brand], brand, 'rise', { duration: .68, distance: 28 });
+        columns.forEach((column) => reveal([column], column, 'rise', {
+          duration: .58,
+          distance: 22,
+          stagger: 0,
+        }));
+        if (legal) reveal([legal], legal, 'fade', { duration: .55, stagger: 0 });
+      } else {
+        reveal([...(brand ? [brand] : []), ...columns], footer, 'rise', {
+          duration: .76,
+          distance: 36,
+          stagger: .07,
+        });
+        if (legal) reveal([legal], legal, 'fade', { duration: .55, delay: .16, stagger: 0 });
+      }
+    });
+
+    // Service-detail routes.
+    revealCollection('.service-facts', ':scope > li', 'rise', { duration: .62, distance: 24 });
+    all('.service-overview').forEach((section) => {
+      const label = section.querySelector<HTMLElement>('.service-section-label');
+      if (label) reveal([label], label, 'fade', { duration: .48, stagger: 0 });
+      reveal(all('.service-overview__copy > p', section), section, 'rise', {
+        duration: .68,
+        distance: compact ? 22 : 32,
+        stagger: .08,
+      });
+    });
+    all('.service-section-heading .service-section-label').forEach((label) => (
+      reveal([label], label, 'fade', { duration: .48, stagger: 0 })
+    ));
+    revealCollection('.service-benefit-grid', '.service-benefit-card', 'clip', { duration: .72 });
+    revealCollection('.service-process__list', ':scope > li', 'rise', { duration: .64, distance: 26 });
+    revealCollection('.service-faq__list', '.service-faq__item', 'rise', { duration: .58, distance: 20 });
+    revealCollection('.service-related__grid', '.service-related-card', 'clip', { duration: .68 });
+
+    // Directory, pricing, intake, state-guide, and legal inner routes.
+    revealCollection('.service-catalog__grid', '.service-catalog-card', 'clip', { duration: .76 });
+    all('.pricing-notes > div > p').forEach((label) => reveal([label], label, 'fade', { duration: .45 }));
+    revealCollection('.pricing-notes > ul', ':scope > li', 'rise', { duration: .58, distance: 22 });
+    all('.state-directory > header > p').forEach((label) => reveal([label], label, 'fade', { duration: .45 }));
+    all('.state-directory__grid > a').forEach((item) => reveal([item], item, 'clip', {
+      duration: phone ? .5 : .58,
+      clipInset: phone
+        ? 'inset(0 8% 0 0 round 16px)'
+        : 'inset(0 6% 0 0 round 18px)',
+      stagger: 0,
+    }));
+    revealCollection('.intake-next > ol', ':scope > li', 'clip', { duration: .68 });
+    revealCollection('.state-guide__facts', ':scope > article', 'rise', { duration: .62, distance: 24 });
+    revealCollection('.state-guide__services > div', ':scope > a', 'clip', { duration: .7 });
+    all('.state-guide__notice').forEach((notice) => reveal([notice], notice, 'fade', { duration: .5 }));
+    all('.legal-page__layout > aside').forEach((aside) => reveal([aside], aside, 'rise', {
+      duration: .65,
+      distance: 26,
+    }));
+    all('.legal-page__intro > p').forEach((paragraph) => reveal([paragraph], paragraph, 'rise', {
+      duration: .58,
+      distance: 20,
+    }));
+    all('.legal-page__content > section').forEach((section) => reveal([section], section, 'rise', {
+      duration: .64,
+      distance: compact ? 22 : 30,
+    }));
+    all('.legal-page__contact').forEach((contact) => reveal([contact], contact, 'clip', { duration: .68 }));
+  });
+
+  const refresh = () => ScrollTrigger.refresh();
+  refreshFrame = requestAnimationFrame(refresh);
+  if (document.readyState !== 'complete') window.addEventListener('load', refresh, { once: true });
+
+  addCleanup(() => {
+    cancelAnimationFrame(refreshFrame);
+    window.removeEventListener('load', refresh);
+    media.revert();
+  });
+}
+
 function initIntakeForm() {
   const form = document.querySelector<HTMLFormElement>('[data-intake-form]');
   if (!form) return;
@@ -870,6 +1424,7 @@ function initSite() {
   initPointerReactions();
   initFaqs();
   initFilingCrew();
+  initScrollMotion();
   initStatePicker();
   initIntakeForm();
 }
