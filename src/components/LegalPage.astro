@@ -1,0 +1,51 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from './Header.astro';
+import Footer from './Footer.astro';
+import type { LegalPageContent } from '../data/legal';
+
+interface Props {
+  content: LegalPageContent;
+}
+
+const { content } = Astro.props;
+---
+
+<BaseLayout title={content.seoTitle} description={content.description}>
+  <Header />
+  <main id="main-content" class="legal-page">
+    <header class="legal-page__hero">
+      <p class="service-kicker"><span></span>Legal</p>
+      <h1>{content.title}</h1>
+      <p>{content.description}</p>
+    </header>
+    <div class="legal-page__layout section">
+      <aside>
+        <p>On this page</p>
+        <nav aria-label={`${content.title} sections`}>
+          {content.sections.map((section, index) => (
+            <a href={`#legal-${index + 1}`}><span>{String(index + 1).padStart(2, '0')}</span>{section.heading}</a>
+          ))}
+        </nav>
+      </aside>
+      <article class="legal-page__content">
+        <div class="legal-page__intro">
+          {content.intro.map((paragraph) => <p>{paragraph}</p>)}
+        </div>
+        {content.sections.map((section, index) => (
+          <section id={`legal-${index + 1}`}>
+            <span>{String(index + 1).padStart(2, '0')}</span>
+            <h2>{section.heading}</h2>
+            {section.paragraphs.map((paragraph) => <p>{paragraph}</p>)}
+            {section.bullets && <ul>{section.bullets.map((item) => <li>{item}</li>)}</ul>}
+          </section>
+        ))}
+        <div class="legal-page__contact">
+          <p>Questions about these terms?</p>
+          <a href="mailto:info@nationalfilingcorporation.com">info@nationalfilingcorporation.com <i class="ph ph-arrow-up-right" aria-hidden="true"></i></a>
+        </div>
+      </article>
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>

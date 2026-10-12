@@ -1,0 +1,51 @@
+---
+import BrandMark from './BrandMark.astro';
+import { links } from '../data/site';
+import { servicePages } from '../data/services';
+---
+
+<footer class="site-footer">
+  <div class="site-footer__main">
+    <div class="site-footer__brand">
+      <a href="/" aria-label="National Filing Corporation home"><BrandMark /></a>
+      <h2>Business filings,<br />made for people.</h2>
+      <p>Designed for founders. Prepared by filing professionals.</p>
+    </div>
+
+    <div class="site-footer__columns">
+      <nav class="site-footer__column" aria-label="Filing services">
+        <h3>Services</h3>
+        {servicePages.map((service) => <a href={service.path}>{service.shortTitle}</a>)}
+      </nav>
+
+      <nav class="site-footer__column" aria-label="Explore NFC">
+        <h3>Explore</h3>
+        <a href={links.services}>Services</a>
+        <a href="/#process">How it works</a>
+        <a href={links.pricing}>Pricing</a>
+        <a href={links.states}>States</a>
+      </nav>
+
+      <nav class="site-footer__column" aria-label="Contact NFC">
+        <h3>Contact</h3>
+        <a href={links.email}>info@nationalfilingcorporation.com</a>
+        <a href={links.phone}>(768) 475-2846</a>
+        <a class="site-footer__contact" href={links.email}>
+          <span>Contact us</span>
+          <i class="ph ph-arrow-up-right" aria-hidden="true"></i>
+        </a>
+      </nav>
+    </div>
+  </div>
+
+  <div class="site-footer__legal">
+    <p>
+      © {new Date().getFullYear()} National Filing Corporation is not a government agency or a law firm and does not provide legal or financial advice.
+    </p>
+    <nav class="site-footer__legal-links" aria-label="Legal and page controls">
+      <a href={links.terms}>Terms of use</a>
+      <a href={links.privacy}>Privacy policy</a>
+      <a href="#top" data-scroll-top><span>Back to top</span><i class="ph ph-arrow-up" aria-hidden="true"></i></a>
+    </nav>
+  </div>
+</footer>

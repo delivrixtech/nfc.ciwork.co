@@ -1,0 +1,338 @@
+---
+import { links } from '../data/site';
+
+interface Props {
+  compact?: boolean;
+}
+
+const { compact = false } = Astro.props;
+
+type HolePose = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  radius: string;
+  opacity?: number;
+};
+
+type ShapePose = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color: string;
+  radius: string;
+  rotate?: number;
+  opacity?: number;
+  hole?: HolePose;
+};
+
+type CrewPiece = {
+  name: string;
+  poses: readonly [ShapePose, ShapePose, ShapePose, ShapePose];
+};
+
+const solid = (
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  color: string,
+  radius = '0',
+  rotate = 0,
+  opacity = 1,
+): ShapePose => ({ x, y, width, height, color, radius, rotate, opacity });
+
+const hollow = (
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  color: string,
+  radius: string,
+  hole: HolePose = { x: 34, y: 34, width: 32, height: 32, radius: '50%' },
+  rotate = 0,
+  opacity = 1,
+): ShapePose => ({ x, y, width, height, color, radius, rotate, opacity, hole });
+
+const ROW = {
+  top: 8.333,
+  upper: 29.167,
+  middle: 50,
+  base: 70.833,
+  feet: 82.639,
+} as const;
+
+const main = (
+  y: number,
+  color: string,
+  radius = '0',
+  rotate = 0,
+  opacity = 1,
+) => solid(24, y, 52, 20.833, color, radius, rotate, opacity);
+
+const ring = (
+  y: number,
+  color: string,
+  radius = '50%',
+  rotate = 0,
+  opacity = 1,
+) => hollow(24, y, 52, 20.833, color, radius, undefined, rotate, opacity);
+
+const side = (
+  position: 'left' | 'right',
+  y: number,
+  color: string,
+  radius = '0',
+  opacity = 1,
+) => solid(position === 'left' ? -2 : 76, y, 26, 10.417, color, radius, 0, opacity);
+
+const elbow = (
+  position: 'left' | 'right',
+  y: number,
+  color: string,
+  opacity = 1,
+) => hollow(
+  position === 'left' ? -2 : 76,
+  y,
+  26,
+  10.417,
+  color,
+  position === 'left' ? '50% 0 0 0' : '0 50% 0 0',
+  position === 'left'
+    ? { x: 50, y: 50, width: 54, height: 54, radius: '0' }
+    : { x: -4, y: 50, width: 54, height: 54, radius: '0' },
+  0,
+  opacity,
+);
+
+const arch = (y: number, color: string, radius = '0', opacity = 1) => hollow(
+  24,
+  y,
+  52,
+  20.833,
+  color,
+  radius,
+  { x: 34, y: 34, width: 32, height: 70, radius: '50% 50% 0 0' },
+  0,
+  opacity,
+);
+
+const cup = (y: number, color: string, opacity = 1) => hollow(
+  24,
+  y,
+  52,
+  20.833,
+  color,
+  '0 0 50% 50%',
+  { x: 34, y: -4, width: 32, height: 70, radius: '0 0 50% 50%' },
+  0,
+  opacity,
+);
+
+const splitBlock = (y: number, color: string, radius = '0', opacity = 1) => hollow(
+  24,
+  y,
+  52,
+  20.833,
+  color,
+  radius,
+  { x: 47, y: 30, width: 6, height: 74, radius: '999px 999px 0 0' },
+  0,
+  opacity,
+);
+
+const separatedLegs = (y: number, color: string, opacity = 1) => hollow(
+  24,
+  y,
+  52,
+  20.833,
+  color,
+  '0',
+  { x: 34, y: -4, width: 32, height: 108, radius: '0' },
+  0,
+  opacity,
+);
+
+const diamond = (y: number, color: string, roundedBottom = true, opacity = 1) => hollow(
+  31.6,
+  y + 3.052,
+  36.8,
+  14.729,
+  color,
+  roundedBottom ? '0 0 40% 0' : '0',
+  { x: 26.5, y: 26.5, width: 47, height: 47, radius: '50%' },
+  45,
+  opacity,
+);
+
+const crossBar = (y: number, color: string, rotate: 45 | -45, opacity = 1) => (
+  solid(17.75, y + 6.167, 64.5, 8.5, color, '999px', rotate, opacity)
+);
+
+const leg = (position: 'left' | 'right', y: number, color: string, opacity = 1) => solid(
+  position === 'left' ? 24.5 : 59,
+  y,
+  17.5,
+  10.417,
+  color,
+  '0',
+  0,
+  opacity,
+);
+
+const foot = (position: 'left' | 'right', y: number, color: string, opacity = 1) => solid(
+  position === 'left' ? 22 : 56.5,
+  y,
+  22.25,
+  8.889,
+  color,
+  '50%',
+  0,
+  opacity,
+);
+
+const hiddenMain = (y: number = ROW.middle) => main(y, 'var(--blue-soft)', '50%', 0, 0);
+const hiddenLeg = (position: 'left' | 'right', y: number = ROW.base) => leg(position, y, 'var(--blue-soft)', 0);
+const hiddenFoot = (position: 'left' | 'right', y: number = ROW.feet) => foot(position, y, 'var(--blue-soft)', 0);
+
+const piece = (
+  name: string,
+  pose0: ShapePose,
+  pose1: ShapePose,
+  pose2: ShapePose,
+  pose3: ShapePose,
+): CrewPiece => ({ name, poses: [pose0, pose1, pose2, pose3] });
+
+const crewFigures: Array<{ label: string; pieces: CrewPiece[] }> = [
+  {
+    label: 'Formation',
+    pieces: [
+      piece('head', ring(ROW.top, 'var(--blue-soft)'), ring(ROW.top, 'var(--mint)', '50% 0 0 50%'), ring(ROW.top, 'var(--olive)'), ring(ROW.top, 'var(--orange)', '0')),
+      piece('core', main(ROW.upper, 'var(--coral)'), main(ROW.upper, 'var(--blue-soft)', '50%'), main(ROW.middle, 'var(--gold)', '0 0 50% 50%'), main(ROW.upper, 'var(--olive)', '50%')),
+      piece('left-orbit', side('left', ROW.upper + 10.416, 'var(--blue-soft)', '50%'), side('left', ROW.upper, 'var(--pink)'), side('left', ROW.upper + 10.416, 'var(--blue-soft)', '50%'), side('left', ROW.upper, 'var(--gold)')),
+      piece('right-orbit', elbow('right', ROW.upper + 10.416, 'var(--pink)'), side('right', ROW.upper, 'var(--pink)', '0 50% 50% 0'), elbow('right', ROW.upper + 10.416, 'var(--pink)'), side('right', ROW.upper, 'var(--gold)', '0 50% 50% 0')),
+      piece('cross-one', crossBar(ROW.middle, 'var(--pink)', 45), crossBar(ROW.middle, 'var(--olive)', 45), crossBar(ROW.upper, 'var(--mint)', 45), crossBar(ROW.middle, 'var(--pink)', 45)),
+      piece('cross-two', crossBar(ROW.middle, 'var(--pink)', -45), crossBar(ROW.middle, 'var(--olive)', -45), crossBar(ROW.upper, 'var(--mint)', -45), crossBar(ROW.middle, 'var(--pink)', -45)),
+      piece('base', arch(ROW.base, 'var(--gold)'), arch(ROW.base, 'var(--orange)'), splitBlock(ROW.base, 'var(--coral)'), arch(ROW.base, 'var(--mint)')),
+    ],
+  },
+  {
+    label: 'Approval',
+    pieces: [
+      piece('head', ring(ROW.middle, 'var(--gold)', '0'), ring(ROW.middle, 'var(--olive)', '0'), ring(ROW.middle, 'var(--blue-soft)', '50% 50% 0 0'), ring(ROW.middle, 'var(--orange)')),
+      piece('body', main(ROW.base, 'var(--mint)', '50%'), cup(ROW.base, 'var(--blue-soft)'), splitBlock(ROW.base, 'var(--coral)'), cup(ROW.base, 'var(--olive)')),
+      piece('left-arm', side('left', ROW.base, 'var(--pink)'), elbow('left', ROW.base, 'var(--pink)'), side('left', ROW.base, 'var(--orange)', '50% 0 0 50%'), elbow('left', ROW.base, 'var(--mint)')),
+      piece('right-arm', side('right', ROW.base, 'var(--pink)'), side('right', ROW.base, 'var(--coral)'), side('right', ROW.base, 'var(--blue-soft)'), side('right', ROW.base, 'var(--gold)')),
+    ],
+  },
+  {
+    label: 'Documents',
+    pieces: [
+      piece('head', ring(ROW.upper, 'var(--orange)', '0 0 50% 50%'), ring(ROW.upper, 'var(--pink)', '50% 50% 0 0'), ring(ROW.upper, 'var(--olive)', '0'), ring(ROW.upper, 'var(--mint)', '0')),
+      piece('core', main(ROW.middle, 'var(--gold)', '0 50% 0 0'), main(ROW.middle, 'var(--blue-soft)', '50%'), main(ROW.middle, 'var(--orange)', '0 50% 0 0'), main(ROW.middle, 'var(--blue-soft)', '0 0 50% 0')),
+      piece('left-orbit', side('left', ROW.middle, 'var(--coral)', '50%'), side('left', ROW.middle, 'var(--coral)', '50%'), side('left', ROW.middle, 'var(--pink)', '0 0 50% 50%'), side('left', ROW.middle, 'var(--coral)', '50%')),
+      piece('right-orbit', side('right', ROW.middle, 'var(--olive)', '0 50% 0 0'), side('right', ROW.middle, 'var(--olive)', '0 50% 0 0'), side('right', ROW.middle, 'var(--gold)', '0 50% 50% 0'), side('right', ROW.middle, 'var(--olive)', '0 50% 0 0')),
+      piece('base', arch(ROW.base, 'var(--olive)'), arch(ROW.base, 'var(--coral)'), splitBlock(ROW.base, 'var(--coral)'), hiddenMain(ROW.base)),
+      piece('left-leg', hiddenLeg('left'), hiddenLeg('left'), hiddenLeg('left'), leg('left', ROW.base, 'var(--orange)')),
+      piece('right-leg', hiddenLeg('right'), hiddenLeg('right'), hiddenLeg('right'), leg('right', ROW.base, 'var(--orange)')),
+      piece('left-foot', hiddenFoot('left'), hiddenFoot('left'), hiddenFoot('left'), foot('left', ROW.feet, 'var(--orange)')),
+      piece('right-foot', hiddenFoot('right'), hiddenFoot('right'), hiddenFoot('right'), foot('right', ROW.feet, 'var(--orange)')),
+    ],
+  },
+  {
+    label: 'Registered office',
+    pieces: [
+      piece('head', ring(ROW.middle, 'var(--gold)'), ring(ROW.middle, 'var(--olive)', '0'), diamond(ROW.middle, 'var(--orange)', false), diamond(ROW.middle, 'var(--mint)', false)),
+      piece('body', splitBlock(ROW.base, 'var(--mint)'), arch(ROW.base, 'var(--coral)'), main(ROW.base, 'var(--blue-soft)', '50% 50% 0 0'), arch(ROW.base, 'var(--pink)', '50% 50% 0 0')),
+      piece('left-arm', side('left', ROW.base, 'var(--orange)', '50% 0 0 50%'), side('left', ROW.base, 'var(--pink)', '0 0 50% 50%'), side('left', ROW.base, 'var(--olive)', '50%'), elbow('left', ROW.base, 'var(--coral)')),
+      piece('right-arm', side('right', ROW.base, 'var(--olive)'), side('right', ROW.base, 'var(--gold)', '0 50% 50% 0'), elbow('right', ROW.base, 'var(--coral)'), elbow('right', ROW.base, 'var(--coral)')),
+    ],
+  },
+  {
+    label: 'Compliance',
+    pieces: [
+      piece('head', diamond(ROW.top, 'var(--coral)'), ring(ROW.top, 'var(--mint)', '50% 50% 0 0'), ring(ROW.top, 'var(--blue-soft)'), diamond(ROW.top, 'var(--olive)')),
+      piece('upper', main(ROW.upper, 'var(--mint)'), main(ROW.upper, 'var(--orange)', '0 0 50% 50%'), ring(ROW.upper, 'var(--orange)', '0'), main(ROW.upper, 'var(--gold)')),
+      piece('middle', main(ROW.middle, 'var(--orange)'), main(ROW.middle, 'var(--pink)', '50% 50% 0 0'), hiddenMain(ROW.middle), hiddenMain(ROW.middle)),
+      piece('left-arm', elbow('left', ROW.middle, 'var(--coral)'), side('left', ROW.middle + 10.416, 'var(--blue-soft)', '50%'), side('left', ROW.upper + 10.416, 'var(--blue-soft)', '50%'), side('left', ROW.upper + 10.416, 'var(--blue-soft)', '50%')),
+      piece('right-arm', elbow('right', ROW.middle, 'var(--coral)'), side('right', ROW.middle + 10.416, 'var(--blue-soft)', '50%'), elbow('right', ROW.upper + 10.416, 'var(--pink)'), elbow('right', ROW.upper + 10.416, 'var(--pink)')),
+      piece('cross-one', hiddenMain(ROW.middle), leg('left', ROW.base, 'var(--olive)'), crossBar(ROW.middle, 'var(--pink)', 45), crossBar(ROW.middle, 'var(--pink)', 45)),
+      piece('cross-two', hiddenMain(ROW.middle), leg('right', ROW.base, 'var(--olive)'), crossBar(ROW.middle, 'var(--pink)', -45), crossBar(ROW.middle, 'var(--pink)', -45)),
+      piece('base', arch(ROW.base, 'var(--orange)'), hiddenMain(ROW.base), separatedLegs(ROW.base, 'var(--gold)'), arch(ROW.base, 'var(--coral)')),
+      piece('left-foot', hiddenFoot('left'), foot('left', ROW.feet, 'var(--olive)'), foot('left', ROW.feet, 'var(--gold)'), hiddenFoot('left')),
+      piece('right-foot', hiddenFoot('right'), foot('right', ROW.feet, 'var(--olive)'), foot('right', ROW.feet, 'var(--gold)'), hiddenFoot('right')),
+    ],
+  },
+];
+
+const hiddenHole: HolePose = { x: 50, y: 50, width: 0, height: 0, radius: '50%', opacity: 0 };
+const poseVariables = (poseIndex: 0 | 1 | 2 | 3, pose: ShapePose) => {
+  const prefix = `pose-${poseIndex}`;
+  const hole = pose.hole ?? hiddenHole;
+  return [
+    `--${prefix}-x:${pose.x}%`,
+    `--${prefix}-y:${pose.y}%`,
+    `--${prefix}-w:${pose.width}%`,
+    `--${prefix}-h:${pose.height}%`,
+    `--${prefix}-color:${pose.color}`,
+    `--${prefix}-radius:${pose.radius}`,
+    `--${prefix}-turn:${pose.rotate ?? 0}deg`,
+    `--${prefix}-opacity:${pose.opacity ?? 1}`,
+    `--${prefix}-hole-x:${hole.x}%`,
+    `--${prefix}-hole-y:${hole.y}%`,
+    `--${prefix}-hole-w:${hole.width}%`,
+    `--${prefix}-hole-h:${hole.height}%`,
+    `--${prefix}-hole-radius:${hole.radius}`,
+    `--${prefix}-hole-opacity:${hole.opacity ?? 1}`,
+  ].join(';');
+};
+
+const pieceStyle = (crewPiece: CrewPiece) => crewPiece.poses
+  .map((pose, poseIndex) => poseVariables(poseIndex as 0 | 1 | 2 | 3, pose))
+  .join(';');
+---
+
+<section class:list={['final-cta', { 'final-cta--compact': compact }]} aria-labelledby="final-cta-title">
+  <div class="final-cta__copy">
+    <h2 id="final-cta-title">Make it official.</h2>
+    <div class="final-cta__actions">
+      <span>Formation, renewals, and filings</span>
+      <a class="button button--primary" href={links.formation} data-pointer-react>
+        <span>Start your business today</span>
+        <i class="ph ph-arrow-right" aria-hidden="true"></i>
+      </a>
+    </div>
+  </div>
+
+  <div
+    class="filing-crew"
+    data-filing-crew
+    role="img"
+    aria-label="Geometric filing figures representing formation, approval, documents, registered offices, and compliance"
+  >
+    {crewFigures.map((figure, figureIndex) => (
+      <div
+        class={`filing-figure filing-figure--${figureIndex + 1}`}
+        data-filing-figure
+        data-figure-label={figure.label}
+        data-pose="0"
+        aria-hidden="true"
+      >
+        {figure.pieces.map((crewPiece, pieceIndex) => (
+          <span
+            class="filing-piece"
+            data-filing-piece
+            data-piece={crewPiece.name}
+            style={`${pieceStyle(crewPiece)};--piece-order:${pieceIndex}`}
+          >
+            <span class="filing-piece__shape">
+              <span class="filing-piece__hole"></span>
+            </span>
+          </span>
+        ))}
+      </div>
+    ))}
+  </div>
+</section>

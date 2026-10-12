@@ -1,0 +1,40 @@
+---
+import { faqs } from '../data/site';
+---
+
+<section class="section faq" id="faq" aria-labelledby="faq-title">
+  <header class="faq__heading">
+    <p class="section-kicker">Good to know</p>
+    <h2 id="faq-title">Questions,<br />answered clearly.</h2>
+    <p>No dense legal language. Just the context you need for the next step.</p>
+  </header>
+
+  <div class="faq__list" data-faq-list>
+    {faqs.map((faq, index) => (
+      <article class:list={['faq-item', { 'is-open': index === 0 }]}>
+        <h3>
+          <button
+            type="button"
+            aria-expanded={index === 0 ? 'true' : 'false'}
+            aria-controls={`faq-panel-${index}`}
+            id={`faq-trigger-${index}`}
+            data-faq-trigger
+          >
+            <span>{faq.question}</span>
+            <span class="faq-item__toggle" aria-hidden="true"><i></i><i></i></span>
+          </button>
+        </h3>
+        <div
+          class="faq-item__panel"
+          id={`faq-panel-${index}`}
+          role="region"
+          aria-labelledby={`faq-trigger-${index}`}
+          hidden={index !== 0}
+          data-faq-panel
+        >
+          <div><p>{faq.answer}</p></div>
+        </div>
+      </article>
+    ))}
+  </div>
+</section>

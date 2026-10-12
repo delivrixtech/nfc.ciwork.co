@@ -1,0 +1,36 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Pricing from '../components/Pricing.astro';
+import FinalCTA from '../components/FinalCTA.astro';
+---
+
+<BaseLayout
+  title="Business Filing Pricing | National Filing Corporation"
+  description="Compare NFC business filing packages with clear one-time pricing for formation, BOI eligibility review, and registered agent support."
+>
+  <Header current="pricing" />
+  <main id="main-content" class="inner-main inner-main--pricing">
+    <section class="inner-hero inner-hero--pricing">
+      <p class="service-kicker"><span></span>Clear pricing</p>
+      <h1>Know what your filing<br />includes before it starts.</h1>
+      <p>Choose the level of preparation and support that fits your next step. Government filing fees are separate and shown before submission.</p>
+    </section>
+    <Pricing />
+    <section class="pricing-notes section" aria-labelledby="pricing-notes-title">
+      <div>
+        <p>Good to know</p>
+        <h2 id="pricing-notes-title">No mystery fees.<br />No vague handoff.</h2>
+      </div>
+      <ul>
+        <li><i class="ph ph-check" aria-hidden="true"></i><span>State fees confirmed before filing</span></li>
+        <li><i class="ph ph-check" aria-hidden="true"></i><span>Expert document preparation and review</span></li>
+        <li><i class="ph ph-check" aria-hidden="true"></i><span>Approval records delivered in one place</span></li>
+        <li><i class="ph ph-check" aria-hidden="true"></i><span>Human support when a requirement is unclear</span></li>
+      </ul>
+    </section>
+    <FinalCTA compact />
+  </main>
+  <Footer />
+</BaseLayout>

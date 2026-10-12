@@ -1,0 +1,103 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { links, states } from '../data/site';
+import { servicePages } from '../data/services';
+---
+
+<BaseLayout
+  title="Start a Business Filing | National Filing Corporation"
+  description="Tell NFC what you need and begin a guided business formation, registered agent, nonprofit, S Corporation, or renewal filing."
+>
+  <Header current="services" />
+  <main id="main-content" class="intake-page">
+    <section class="intake-hero">
+      <div class="intake-hero__copy">
+        <p class="service-kicker"><span></span>Start your filing</p>
+        <h1>Tell us where<br />you want to begin.</h1>
+        <p>Share the essentials now. An NFC filing specialist will review the request and help confirm the right service, state requirements, and next step.</p>
+        <div class="intake-hero__trust">
+          <span><i class="ph ph-shield-check" aria-hidden="true"></i>Private request</span>
+          <span><i class="ph ph-user-circle-check" aria-hidden="true"></i>Human review</span>
+          <span><i class="ph ph-clock" aria-hidden="true"></i>Clear follow-up</span>
+        </div>
+      </div>
+
+      <form
+        class="intake-form"
+        action={links.email}
+        method="get"
+        enctype="text/plain"
+        data-intake-form
+      >
+        <div class="intake-form__heading">
+          <span>01</span>
+          <div><p>Filing request</p><h2>Start with the essentials.</h2></div>
+        </div>
+
+        <div class="intake-form__grid">
+          <label>
+            <span>Your name</span>
+            <input type="text" name="name" autocomplete="name" required placeholder="Full name" />
+          </label>
+          <label>
+            <span>Email</span>
+            <input type="email" name="email" autocomplete="email" required placeholder="you@company.com" />
+          </label>
+          <label>
+            <span>Phone</span>
+            <input type="tel" name="phone" autocomplete="tel" placeholder="(000) 000-0000" />
+          </label>
+          <label>
+            <span>Service</span>
+            <span class="intake-form__select">
+              <select name="service" data-intake-service required>
+                <option value="">Choose a service</option>
+                {servicePages.map((service) => <option value={service.slug}>{service.shortTitle}</option>)}
+              </select>
+              <i class="ph ph-caret-down" aria-hidden="true"></i>
+            </span>
+          </label>
+          <label>
+            <span>State</span>
+            <span class="intake-form__select">
+              <select name="state" data-intake-state required>
+                <option value="">Choose a state</option>
+                {states.map((state) => <option value={state.toLowerCase().replaceAll(' ', '-')}>{state}</option>)}
+              </select>
+              <i class="ph ph-caret-down" aria-hidden="true"></i>
+            </span>
+          </label>
+          <label>
+            <span>Business name <small>(if chosen)</small></span>
+            <input type="text" name="business" autocomplete="organization" placeholder="Company name" />
+          </label>
+          <label class="intake-form__message">
+            <span>What should we know?</span>
+            <textarea name="details" rows="4" placeholder="Timing, existing entity, questions, or special requirements"></textarea>
+          </label>
+        </div>
+
+        <div class="intake-form__footer">
+          <p data-intake-message aria-live="polite">Submitting opens a prepared email to NFC. No information is stored on this site.</p>
+          <button class="button button--primary" type="submit" data-pointer-react>
+            <span>Prepare my request</span>
+            <i class="ph ph-arrow-right" aria-hidden="true"></i>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="intake-next section" aria-labelledby="intake-next-title">
+      <p>What happens next</p>
+      <h2 id="intake-next-title">A specialist reviews<br />the route before filing.</h2>
+      <ol>
+        <li><span>01</span><div><h3>Request received</h3><p>Your selected service, state, and timing are organized for review.</p></div></li>
+        <li><span>02</span><div><h3>Requirements confirmed</h3><p>NFC identifies missing details, government fees, and the correct filing package.</p></div></li>
+        <li><span>03</span><div><h3>Documents prepared</h3><p>You approve the next step before documents are submitted to the applicable agency.</p></div></li>
+      </ol>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>

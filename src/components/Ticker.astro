@@ -1,0 +1,21 @@
+---
+import { tickerItems } from '../data/site';
+---
+
+<section class="trust-strip" aria-label="Service highlights">
+  <p class="trust-strip__label">Trusted by</p>
+  <div class="trust-strip__fade trust-strip__fade--left"></div>
+  <div class="splide js-ticker" role="group" aria-label="National Filing Corporation service highlights">
+    <div class="splide__track" tabindex="0" aria-label="Service highlights carousel; focus pauses motion">
+      <div class="splide__list">
+        {tickerItems.map((item, index) => (
+          <div class="splide__slide trust-pill">
+            <i class:list={['ph', ['ph-buildings', 'ph-star', 'ph-clock', 'ph-file-text', 'ph-handshake'][index]]} aria-hidden="true"></i>
+            <strong>{item}</strong>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+  <div class="trust-strip__fade trust-strip__fade--right"></div>
+</section>

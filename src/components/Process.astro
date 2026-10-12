@@ -1,0 +1,44 @@
+---
+import { processSteps } from '../data/site';
+
+const processIcons = ['ph-note-pencil', 'ph-files', 'ph-seal-check'] as const;
+---
+
+<section class="section process" id="process" aria-labelledby="process-title">
+  <div class="process__intro">
+    <h2 id="process-title">Create your business.<br />We handle the filing.</h2>
+  </div>
+
+  <div class="process-film">
+    <img
+      class="process-film__image"
+      src="/media/nfc-demo-office.jpg"
+      alt="An NFC filing specialist reviewing formation documents with a founder"
+      width="1408"
+      height="792"
+      loading="lazy"
+    />
+    <a
+      class="process-film__button"
+      href="#process-steps"
+      aria-controls="process-steps"
+      data-process-jump
+      data-pointer-react
+    >
+      <span>See the 3-step process</span>
+      <i class="ph ph-arrow-down" aria-hidden="true"></i>
+    </a>
+  </div>
+
+  <div class="process__steps" id="process-steps" data-process tabindex="-1">
+    {processSteps.map((step, index) => (
+      <article class="process-step" data-process-step>
+        <div class:list={['process-step__glyph', `process-step__glyph--${index + 1}`]} aria-hidden="true">
+          <i class:list={['ph', processIcons[index]]}></i>
+        </div>
+        <h3>{step.title}</h3>
+        <p>{step.description}</p>
+      </article>
+    ))}
+  </div>
+</section>

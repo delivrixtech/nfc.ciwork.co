@@ -1,0 +1,37 @@
+---
+const railItems = [
+  { image: '/media/nfc-rail-01.jpg', alt: 'A filing specialist handing completed formation documents to a founder' },
+  { image: '/media/nfc-rail-02.jpg', alt: 'A business owner reviewing company documents with an NFC specialist' },
+  { image: '/media/nfc-rail-03.jpg', alt: 'Organized federal tax and EIN filing documents on a desk' },
+  { image: '/media/nfc-rail-04.jpg', alt: 'A registered agent receiving an official certified envelope' },
+  { image: '/media/nfc-rail-05.jpg', alt: 'A compliance calendar and approval stamp prepared for a business' },
+  { image: '/media/nfc-rail-06.jpg', alt: 'An NFC support specialist guiding a business owner' },
+  { image: '/media/nfc-rail-07.jpg', alt: 'A founder organizing approved company records in a filing studio' },
+  { image: '/media/nfc-rail-08.jpg', alt: 'A completed business filing package ready for delivery' },
+] as const;
+---
+
+<section class="service-rail" aria-labelledby="service-rail-title">
+  <header class="service-rail__header">
+    <h2 id="service-rail-title">Real filings,<br />real results.</h2>
+  </header>
+
+  <div
+    class="splide js-media-rail"
+    role="group"
+    aria-label="National Filing Corporation at work"
+    data-cursor-label="DRAG"
+    data-cursor-icon="ph-arrows-left-right"
+  >
+    <div class="splide__track" tabindex="0" aria-label="Filing results carousel; focus pauses motion">
+      <div class="splide__list">
+        {railItems.map((item) => (
+          <figure class="splide__slide service-rail__card">
+            <img src={item.image} alt={item.alt} width="1086" height="1448" loading="lazy" />
+          </figure>
+        ))}
+      </div>
+    </div>
+  </div>
+
+</section>

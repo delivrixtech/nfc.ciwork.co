@@ -1,0 +1,68 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import FinalCTA from '../components/FinalCTA.astro';
+
+const facts = [
+  ['State portal', 'Florida Sunbiz'],
+  ['Online filing', 'Available through Sunbiz'],
+  ['Annual report deadline', 'May 1'],
+  ['Registered agent', 'Required'],
+] as const;
+
+const guides = [
+  { title: 'LLC formation', href: '/llc-formation/', icon: 'ph-buildings', text: 'File Articles of Organization, appoint a Florida registered agent, and organize an Operating Agreement.' },
+  { title: 'Corporation formation', href: '/c-corporation/', icon: 'ph-chart-line-up', text: 'Prepare Articles of Incorporation, directors, bylaws, and the company’s initial share structure.' },
+  { title: 'S Corporation election', href: '/s-corporation/', icon: 'ph-file-arrow-up', text: 'Coordinate an eligible Florida entity with a timely federal Form 2553 election.' },
+  { title: 'Nonprofit formation', href: '/nonprofit-organization/', icon: 'ph-hand-heart', text: 'Build compliant purpose language, governance records, and a route to federal exemption.' },
+  { title: 'Registered agent', href: '/registered-agent/', icon: 'ph-user-focus', text: 'Maintain an eligible Florida street address and reliable business-hours document receipt.' },
+  { title: 'Annual report', href: '/business-renewal/', icon: 'ph-calendar-check', text: 'Keep entity details current and file the annual report before the state deadline.' },
+] as const;
+---
+
+<BaseLayout
+  title="Florida Business Formation Guide | NFC"
+  description="Understand Florida LLC, corporation, nonprofit, registered agent, and annual report requirements, then start a guided NFC filing."
+  image="/media/nfc-state-studio.jpg"
+>
+  <Header current="states" />
+  <main id="main-content" class="inner-main state-guide">
+    <section class="state-guide__hero">
+      <div class="state-guide__copy">
+        <nav aria-label="Breadcrumb"><a href="/">Home</a><i class="ph ph-arrow-right"></i><a href="/browse-by-state/">States</a><i class="ph ph-arrow-right"></i><span>Florida</span></nav>
+        <p class="service-kicker"><span></span>Florida business formation</p>
+        <h1>Form your business<br />in Florida.</h1>
+        <p>Understand the core state requirements, choose an entity, and let NFC prepare the filing path from first details to approved records.</p>
+        <a class="button button--primary" href="/business-formation/?state=florida" data-pointer-react><span>Start in Florida</span><i class="ph ph-arrow-right"></i></a>
+      </div>
+      <figure data-pointer-react data-cursor-label="FLORIDA">
+        <img src="/media/nfc-state-studio.jpg" alt="A founder and filing specialist reviewing Florida business requirements" width="1586" height="992" />
+        <figcaption><span>FL</span><strong>No state personal<br />income tax</strong></figcaption>
+      </figure>
+    </section>
+
+    <section class="state-guide__facts section" aria-label="Florida filing facts">
+      {facts.map(([label, value], index) => <article><span>{String(index + 1).padStart(2, '0')}</span><p>{label}</p><strong>{value}</strong></article>)}
+    </section>
+
+    <section class="state-guide__services section" aria-labelledby="florida-services-title">
+      <header><p>Choose your route</p><h2 id="florida-services-title">Florida filings,<br />clearly mapped.</h2></header>
+      <div>
+        {guides.map((guide, index) => (
+          <a href={guide.href} data-pointer-react data-cursor-label="OPEN">
+            <span>{String(index + 1).padStart(2, '0')}</span>
+            <i class:list={['ph', guide.icon]} aria-hidden="true"></i>
+            <h3>{guide.title}</h3>
+            <p>{guide.text}</p>
+            <i class="ph ph-arrow-up-right" aria-hidden="true"></i>
+          </a>
+        ))}
+      </div>
+      <p class="state-guide__notice">State fees, forms, and processing times can change. NFC confirms the current requirement before submission.</p>
+    </section>
+
+    <FinalCTA compact />
+  </main>
+  <Footer />
+</BaseLayout>

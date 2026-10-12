@@ -1,0 +1,65 @@
+---
+import { links, states } from '../data/site';
+---
+
+<section class="section state-story" id="states" aria-labelledby="state-title">
+  <header class="state-story__heading">
+    <h2 id="state-title">A clear way to start,<br />wherever business<br />takes you.</h2>
+  </header>
+
+  <div class="state-story__body">
+    <div class="state-story__content-left">
+      <div class="state-story__panel">
+        <div class="state-story__seal" aria-hidden="true">
+          <i class="ph ph-map-pin-line"></i>
+        </div>
+        <div class="state-story__eyebrow"><span class="state-story__pulse"></span> Florida available now</div>
+        <h3>Choose the state where your company begins.</h3>
+        <p>We map the requirements, prepare the filing, and keep every next step clear.</p>
+
+        <div class="state-picker" data-state-picker>
+          <label for="state-select">Choose your state</label>
+          <div class="state-picker__row">
+            <div class="state-picker__select-wrap">
+              <select id="state-select" data-state-select aria-label="Choose your state">
+                <option value="">Select a state</option>
+                {states.map((state) => (
+                  <option value={state.toLowerCase().replaceAll(' ', '-')}>{state}</option>
+                ))}
+              </select>
+              <i class="ph ph-caret-down" aria-hidden="true"></i>
+            </div>
+            <a
+              class="button button--primary state-picker__button"
+              href={links.formation}
+              aria-disabled="true"
+              tabindex="-1"
+              data-state-submit
+            >
+              <span>Continue</span>
+              <i class="ph ph-arrow-right" aria-hidden="true"></i>
+            </a>
+          </div>
+          <p class="state-picker__message" data-state-message aria-live="polite">
+            Florida is available now. More states are coming soon.
+          </p>
+        </div>
+      </div>
+
+      <a class="state-story__more" href={links.states} data-pointer-react>
+        <span>Browse state requirements</span>
+        <i class="ph ph-arrow-up-right" aria-hidden="true"></i>
+      </a>
+    </div>
+
+    <figure class="state-story__media">
+      <img
+        src="/media/nfc-state-studio.jpg"
+        alt="A founder and filing specialist reviewing state formation requirements"
+        width="1586"
+        height="992"
+        loading="lazy"
+      />
+    </figure>
+  </div>
+</section>

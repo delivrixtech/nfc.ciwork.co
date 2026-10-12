@@ -1,0 +1,140 @@
+---
+import '@fontsource-variable/inter/wght.css';
+import '../styles/global.css';
+import '../styles/service-pages.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  schema?: Record<string, unknown> | readonly Record<string, unknown>[];
+  noindex?: boolean;
+}
+
+const {
+  title = 'National Filing Corporation | Business Formation, Done Right',
+  description = 'Professional business formation, state filing, EIN, registered agent services, and expert support from start to finish.',
+  image = '/media/nfc-hero-studio.jpg',
+  schema,
+  noindex = false,
+} = Astro.props;
+
+const siteUrl = Astro.site ?? new URL('https://nfc.ciwork.co');
+const canonical = new URL(Astro.url.pathname, siteUrl);
+const homeUrl = new URL('/', siteUrl);
+const logoUrl = new URL('/media/nfc-logo-light.png', siteUrl);
+const socialImageUrl = new URL(image, siteUrl);
+const organizationId = new URL('/#organization', siteUrl).href;
+const websiteId = new URL('/#website', siteUrl).href;
+const webpageId = `${canonical.href}#webpage`;
+const additionalSchema = schema ? (Array.isArray(schema) ? schema : [schema]) : [];
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': organizationId,
+      name: 'National Filing Corporation',
+      url: homeUrl.href,
+      email: 'info@nationalfilingcorporation.com',
+      telephone: '+1-768-475-2846',
+      description: 'National Filing Corporation prepares business formation and compliance filings with clear, expert support.',
+      logo: {
+        '@type': 'ImageObject',
+        url: logoUrl.href,
+        width: 771,
+        height: 195,
+      },
+      contactPoint: {
+        '@type': 'ContactPoint',
+        telephone: '+1-768-475-2846',
+        contactType: 'customer service',
+        availableLanguage: ['English'],
+      },
+    },
+    {
+      '@type': 'WebSite',
+      '@id': websiteId,
+      url: homeUrl.href,
+      name: 'National Filing Corporation',
+      publisher: { '@id': organizationId },
+      inLanguage: 'en-US',
+    },
+    {
+      '@type': 'WebPage',
+      '@id': webpageId,
+      url: canonical.href,
+      name: title,
+      description,
+      isPartOf: { '@id': websiteId },
+      about: { '@id': organizationId },
+      primaryImageOfPage: {
+        '@type': 'ImageObject',
+        url: socialImageUrl.href,
+        width: 1536,
+        height: 1024,
+      },
+      inLanguage: 'en-US',
+    },
+    ...additionalSchema,
+  ],
+};
+---
+
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta id="theme-color" name="theme-color" content="#f8f0e3" />
+    <meta name="description" content={description} />
+    <meta
+      name="robots"
+      content={noindex
+        ? 'noindex, follow'
+        : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'}
+    />
+    <link rel="canonical" href={canonical.href} />
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="National Filing Corporation" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical.href} />
+    <meta property="og:image" content={socialImageUrl.href} />
+    <meta property="og:image:alt" content="National Filing Corporation business formation service" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={socialImageUrl.href} />
+    <meta name="twitter:image:alt" content="National Filing Corporation business formation service" />
+    <title>{title}</title>
+    <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+    <script is:inline>
+      (() => {
+        const stored = localStorage.getItem('nfc-theme');
+        const theme = stored === 'light' || stored === 'dark'
+          ? stored
+          : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+      })();
+    </script>
+  </head>
+  <body id="top">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <slot />
+    <div class="global-cursor" data-global-cursor aria-hidden="true">
+      <i class="ph ph-arrow-up-right" data-global-cursor-icon></i>
+      <span data-global-cursor-label>EXPLORE</span>
+    </div>
+  </body>
+</html>
+
+<script>
+  import '../scripts/main';
+</script>

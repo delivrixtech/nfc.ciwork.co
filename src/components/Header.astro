@@ -1,0 +1,97 @@
+---
+import BrandMark from './BrandMark.astro';
+import { links } from '../data/site';
+import { servicePages } from '../data/services';
+
+interface Props {
+  current?: 'home' | 'services' | 'process' | 'pricing' | 'states';
+}
+
+const { current = 'home' } = Astro.props;
+const serviceIcons = ['ph-buildings', 'ph-chart-line-up', 'ph-file-arrow-up', 'ph-hand-heart', 'ph-calendar-check', 'ph-user-focus'] as const;
+---
+
+<header class="site-header" data-header>
+  <a class="site-header__brand" href="/" aria-label="National Filing Corporation home">
+    <BrandMark />
+  </a>
+
+  <button
+    class="menu-toggle"
+    type="button"
+    aria-expanded="false"
+    aria-controls="site-navigation"
+    aria-label="Open navigation"
+    data-menu-toggle
+  >
+    <span></span>
+    <span></span>
+  </button>
+
+  <nav class="site-nav" id="site-navigation" aria-label="Primary navigation" data-menu>
+    <div class="site-nav__inner">
+      <a class:list={{ 'is-active': current === 'home' }} href="/" aria-current={current === 'home' ? 'page' : undefined}>Home</a>
+      <div class="site-nav__services" data-services-menu>
+        <a
+          id="services-vignette-trigger"
+          class:list={['site-nav__services-trigger', { 'is-active': current === 'services' }]}
+          href={links.services}
+          aria-current={current === 'services' ? 'page' : undefined}
+          aria-haspopup="true"
+          aria-expanded="false"
+          aria-controls="services-vignette"
+          data-services-trigger
+        >
+          <span>Services</span>
+          <i class="ph ph-caret-down" aria-hidden="true"></i>
+        </a>
+        <div
+          class="services-vignette"
+          id="services-vignette"
+          aria-labelledby="services-vignette-trigger"
+          aria-hidden="true"
+          data-services-panel
+          inert
+        >
+          <div class="services-vignette__header">
+            <span>Filing services</span>
+            <p>Choose your route</p>
+          </div>
+          <div class="services-vignette__grid">
+            {servicePages.map((service, index) => (
+              <a class:list={['services-vignette__link', `is-${service.accent}`]} href={service.path} data-pointer-react>
+                <span class="services-vignette__icon"><i class:list={['ph', serviceIcons[index]]} aria-hidden="true"></i></span>
+                <span><small>{String(index + 1).padStart(2, '0')}</small><strong>{service.shortTitle}</strong></span>
+                <i class="ph ph-arrow-up-right" aria-hidden="true"></i>
+              </a>
+            ))}
+          </div>
+          <a class="services-vignette__all" href={links.services}>
+            <span>View all services</span>
+            <i class="ph ph-arrow-right" aria-hidden="true"></i>
+          </a>
+        </div>
+      </div>
+      <a class:list={{ 'is-active': current === 'process' }} href="/#process">Process</a>
+      <a class:list={{ 'is-active': current === 'pricing' }} href={links.pricing} aria-current={current === 'pricing' ? 'page' : undefined}>Pricing</a>
+      <a class:list={{ 'is-active': current === 'states' }} href={links.states} aria-current={current === 'states' ? 'page' : undefined}>States</a>
+      <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch to dark theme">
+        <span class="theme-toggle__track" aria-hidden="true"><i></i></span>
+        <span data-theme-label>Dark</span>
+      </button>
+      <div class="site-nav__mobile-card" aria-hidden="true">
+        <img src="/media/nfc-rail-06.jpg" alt="" width="1086" height="1448" loading="lazy" />
+        <span>Expert filing.<br />Human guidance.</span>
+      </div>
+      <a class="site-nav__mobile-cta" href={links.formation} data-pointer-react>
+        <span>Get started</span>
+        <i class="ph ph-arrow-right" aria-hidden="true"></i>
+      </a>
+    </div>
+  </nav>
+
+  <a class="button button--primary site-header__cta" href={links.formation} data-pointer-react>
+    <span>Request filing</span>
+    <i class="ph ph-arrow-right" aria-hidden="true"></i>
+  </a>
+</header>

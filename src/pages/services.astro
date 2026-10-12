@@ -1,0 +1,64 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import FinalCTA from '../components/FinalCTA.astro';
+import { servicePages } from '../data/services';
+
+const siteUrl = Astro.site ?? new URL('https://nfc.ciwork.co');
+const schema = {
+  '@type': 'ItemList',
+  '@id': new URL('/services/#service-list', siteUrl).href,
+  name: 'National Filing Corporation services',
+  itemListElement: servicePages.map((service, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: service.shortTitle,
+    url: new URL(service.path, siteUrl).href,
+  })),
+};
+---
+
+<BaseLayout
+  title="Business Formation & Compliance Services | NFC"
+  description="Explore LLC, C Corporation, S Corporation, nonprofit, renewal, and registered agent services from National Filing Corporation."
+  schema={schema}
+>
+  <Header current="services" />
+  <main id="main-content" class="inner-main">
+    <section class="inner-hero inner-hero--services">
+      <p class="service-kicker"><span></span>Services</p>
+      <h1>Every filing path,<br />clearly organized.</h1>
+      <p>Choose the structure or compliance service you need. Each route explains the requirements, the process, and what NFC prepares for you.</p>
+    </section>
+
+    <section class="service-catalog section" aria-labelledby="service-catalog-title">
+      <h2 id="service-catalog-title" class="visually-hidden">NFC services</h2>
+      <div class="service-catalog__grid">
+        {servicePages.map((service, index) => (
+          <a
+            class:list={['service-catalog-card', `is-${service.accent}`]}
+            href={service.path}
+            data-pointer-react
+            data-cursor-label="EXPLORE"
+            data-cursor-icon="ph-arrow-up-right"
+          >
+            <div class="service-catalog-card__media">
+              <img src={service.image} alt={service.imageAlt} width="1536" height="1024" loading={index < 2 ? 'eager' : 'lazy'} />
+              <span>{String(index + 1).padStart(2, '0')}</span>
+            </div>
+            <div class="service-catalog-card__copy">
+              <p>{service.eyebrow}</p>
+              <h2>{service.shortTitle}</h2>
+              <span>{service.description}</span>
+              <i class="ph ph-arrow-up-right" aria-hidden="true"></i>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <FinalCTA compact />
+  </main>
+  <Footer />
+</BaseLayout>

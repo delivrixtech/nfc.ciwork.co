@@ -1,0 +1,19 @@
+---
+interface Props {
+  compact?: boolean;
+  light?: boolean;
+}
+
+const { compact = false, light = false } = Astro.props;
+---
+
+<span class:list={['brand-mark', { 'is-compact': compact, 'is-light': light }]} aria-hidden="true">
+  <svg class="brand-mark__folder" viewBox="0 0 44 36" fill="none">
+    <path d="M3 9.5V31c0 1.1.9 2 2 2h34c1.1 0 2-.9 2-2V9.5c0-1.1-.9-2-2-2H19.5L15 3H5a2 2 0 0 0-2 2v4.5Z" />
+    <path class="brand-mark__folder-back" d="M7 7V5.5C7 4.7 7.7 4 8.5 4H17l4.5 4.5H40" />
+  </svg>
+  <span class="brand-mark__name">
+    <strong>NFC</strong>
+    <small>National Filing<br />Corporation</small>
+  </span>
+</span>
